@@ -2,12 +2,25 @@ library(shiny)
 library(shinydashboard)
 library(shinyBS)
 library(boastUtils)
-
+library(triangle)
 library(ggplot2)
 library(stats)
 library(Rlab)
 library(shinyWidgets)
 library(dplyr)
+
+# define the bimodal density function
+biDens <- function(x, left){
+  return(
+    56 * (left * x * (1 - x)^6 + (1 - left) * x^6 * (1 - x))
+  )
+}
+
+# generate the data for bimodal
+
+
+#betaY <- rbeta(2,5)
+#biData <- 
 
 # Define top level objects ----
 psuPalette <- c("#1E407C","#BC204B","#3EA39E","#E98300",
@@ -24,7 +37,7 @@ ui <- list(
     dashboardSidebar(
       width = 250,
       sidebarMenu(
-        id = "tabs",
+        id = "pages",
         menuItem("Picker", tabName = "picker", icon = icon("flask"))
       )
     ),
@@ -35,7 +48,7 @@ ui <- list(
           withMathJax(),
           h1("Designing the Population Picker"),
           p("This app is for comparing the current form of the population picker
-            (thanks Leah!) with a new form that is",
+             with a new form that is",
             tags$ol(
               tags$li("an improvement in the coding (e.g., more efficient),"),
               tags$li("provides greater flexibility of cases (can work in apps
@@ -45,357 +58,7 @@ ui <- list(
               tags$li("and, most importantly, is a module that can be called in
                       many different apps.")
             )),
-          tags$hr(),
-          h2("Current, Non-modular design"),
-          # Original ====
-          # Layout for the population picker
-          sidebarLayout(
-            sidebarPanel(
-              width=6,
-              fluidRow(
-                column(
-                  6,
-                  # Select Input for the distribution type
-                  selectInput(
-                    inputId = "popDist",
-                    label = "Population type",
-                    list(
-                      "Left-skewed" = "leftskewed",
-                      "Right-skewed" = "rightskewed",
-                      "Symmetric" = "symmetric",
-                      "Bimodal" = "bimodal",
-                      "Astragalus (Bone Die)" =
-                        "astragalus",
-                      "Playlist" =
-                        "ipodshuffle",
-                      "Accident Rate" = "poisson"
-                    )
-                  ),
 
-                  # Conditional Panel for type of population distribution
-
-                  # Left Skewed
-                  conditionalPanel(
-                    condition = "input.popDist=='leftskewed'",
-                    sliderInput(
-                      "leftskew",
-                      " Skewness",
-                      min = 0,
-                      max = 1,
-                      value = .5,
-                      step = 0.1,
-                      ticks=FALSE
-                    ),
-                    div(style = "position: absolute; left: 0.5em; top: 9em", "min"),
-                    div(style = "position: absolute; right: 0.5em; top: 9em", "max"),
-                  )
-                  ,
-
-                  # Right Skewed
-                  conditionalPanel(
-                    condition = "input.popDist=='rightskewed'",
-                    sliderInput(
-                      "rightskew",
-                      "Skewness",
-                      min = 0,
-                      max = 1,
-                      value = .5,
-                      step = .01,
-                      ticks=FALSE
-                    ),
-                    div(style = "position: absolute; left: 0.5em; top: 9em", "min"),
-                    div(style = "position: absolute; right: 0.5em; top: 9em", "max"),
-                  ),
-
-                  #Symmetric
-                  conditionalPanel(
-                    condition = "input.popDist=='symmetric'",
-                    sliderInput(
-                      "inverse",
-                      "Peakedness",
-                      min = 0,
-                      max = 1,
-                      value = .5,
-                      step = 0.01,
-                      ticks=FALSE
-                    ),
-                    div(style = "position: absolute; left: 0.5em; top: 9em", "U"),
-                    div(style = "position: absolute; left: 0.5em; top: 10em", "Shaped"),
-                    div(style = "position: absolute; right: 0.5em; top: 9em", "Bell"),
-                    div(style = "position: absolute; right: 0.5em; top: 10em", "Shaped"),
-                  ),
-
-                  # Bimodal
-                  conditionalPanel(
-                    condition = "input.popDist=='bimodal'",
-
-                    sliderInput(
-                      "prop",
-                      "% under right mode",
-                      min = 10,
-                      max = 90,
-                      value = 50,
-                      ticks=F,
-                      post="%",
-                      #grid_num=9
-                      #interval = 1
-                    )
-                  ),
-
-                  # Poisson
-                  conditionalPanel(
-                    condition = "input.popDist=='poisson'",
-
-                    sliderInput(
-                      "poissonmean",
-                      "Mean",
-                      min = 0,
-                      max = 10,
-                      value = 1,
-                      step = 0.1
-                    ),
-                    conditionalPanel(
-                      condition="input.poissonmean==0",
-                      "Note: When the mean is set to 0, the number of accidents is always 0, so the variance is 0."
-                    )
-                  ),
-
-                  #iPod shuffle
-                  conditionalPanel(
-                    condition = "input.popDist == 'ipodshuffle'",
-                    column(
-                      width = 7,
-                      offset = 0,
-
-                      p("Number of songs:"),
-                      # Inputs for the probabilites of each music type
-                      numericInput(
-                        "s1",
-                        "Jazz",
-                        1,
-                        min = 0,
-                        max = 200,
-                        step = 1,
-                        width="75px"
-                      ),
-                      numericInput(
-                        "s2",
-                        "Rock",
-                        1,
-                        min = 0,
-                        max = 200,
-                        step = 1,
-                        width="75px"
-                      ),
-                      numericInput(
-                        "s3",
-                        "Country",
-                        1,
-                        min = 0,
-                        max = 200,
-                        step = 1,
-                        width="75px"
-                      ),
-                      numericInput(
-                        "s4",
-                        "Hip-hop",
-                        1,
-                        min = 0,
-                        max = 200,
-                        step = 1,
-                        width="75px"
-                      )
-                    ),
-
-                  ) #This parenthesis ends the iPod Shuffle Conditional Panel
-
-                ), #Ends inputs column
-
-                # Inputs for each type:
-
-                column(
-                  6,
-
-                  #left skewed
-                  conditionalPanel(
-                    condition = "input.popDist == 'leftskewed'",
-                    # Choose number of paths
-                    sliderInput(
-                      "leftpath",
-                      "Number of paths",
-                      min = 1,
-                      max = 5,
-                      value = 1
-                    ),
-                    # Choose sample size
-                    sliderInput(
-                      "leftsize",
-                      "Sample size (n)",
-                      min = 10,
-                      max = 1000,
-                      value = 100
-                    )
-
-                  ),
-
-                  # Right skewed
-                  conditionalPanel(
-                    condition = "input.popDist == 'rightskewed'",
-                    # Choose the number of sample means
-                    sliderInput(
-                      "rightpath",
-                      "Number of paths",
-                      min = 1,
-                      max = 5,
-                      value = 1
-                    ),
-                    # Choose the number of sample means
-                    sliderInput(
-                      "rightsize",
-                      "Sample size (n)",
-                      min = 10,
-                      max = 1000,
-                      value = 100
-                    )
-                  ),
-
-                  # Symmetric
-                  conditionalPanel(
-                    condition = "input.popDist == 'symmetric'",
-                    # Choose the number of paths
-                    sliderInput(
-                      "sympath",
-                      "Number of paths",
-                      min = 1,
-                      max = 5,
-                      value = 1
-                    ),
-                    # Choose the number of sample means
-                    sliderInput(
-                      "symsize",
-                      "Sample size (n)",
-                      min = 10,
-                      max = 1000,
-                      value = 100
-                    )
-                  ),
-                  # Astragulus
-                  conditionalPanel(
-                    condition = "input.popDist == 'astragalus'",
-                    # Choose number of paths
-                    sliderInput(
-                      "aspath",
-                      'Number of paths',
-                      min = 1,
-                      max = 5,
-                      value = 1
-                    ),
-                    # Choose sample size
-                    sliderInput(
-                      "assize",
-                      "Number of trials",
-                      min = 10,
-                      max = 1000,
-                      value = 100
-                    )
-                  ),
-
-                  # Bimodal
-                  conditionalPanel(
-                    condition = "input.popDist == 'bimodal'",
-                    # Choose the number of paths
-                    sliderInput(
-                      "bipath",
-                      "Number of paths",
-                      min = 1,
-                      max = 5,
-                      value = 1
-                    ),
-                    # Choose the number of sample means
-                    sliderInput(
-                      "bisize",
-                      "Sample size (n)",
-                      min = 10,
-                      max = 1000,
-                      value = 100
-                    )
-                  ),
-
-                  # Poisson
-                  conditionalPanel(
-                    condition = "input.popDist == 'poisson'",
-                    # Choose the number of paths
-                    sliderInput(
-                      "poissonpath",
-                      "Number of paths",
-                      min = 1,
-                      max = 5,
-                      value = 1
-                    ),
-                    # Choose the number of sample means
-                    sliderInput(
-                      "poissonsize",
-                      "Sample size (n)",
-                      min = 10,
-                      max = 1000,
-                      value = 100
-                    )
-                  ),
-
-                  # Playlist
-                  conditionalPanel(
-                    condition = "input.popDist == 'ipodshuffle'",
-                    # Choose number of paths
-                    sliderInput(
-                      "ipodpath",
-                      label = "Number of paths",
-                      min = 1,
-                      max = 5,
-                      value = 1
-                    ),
-                    # Choose sample size
-                    sliderInput(
-                      "ipodsize",
-                      label = "Sample size (n)",
-                      min = 10,
-                      max = 1000,
-                      value = 100
-                    ),
-                    # Buttons to choose music type
-                    radioButtons(
-                      "ptype",
-                      "Genre to track:",
-                      list("Jazz",
-                           "Rock",
-                           "Country",
-                           "Hip-hop"),
-                      selected = "Jazz"
-                    )
-                  )
-                )
-              )
-            ), #End of column for slider inputs
-
-            mainPanel(
-              width = 6,
-              # Plots for each distribution; either histogram or density
-              conditionalPanel(condition = "input.popDist == 'leftskewed'",
-                               plotOutput('plotleft1')),
-              conditionalPanel(condition = "input.popDist == 'rightskewed'",
-                               plotOutput('plotright1')),
-              conditionalPanel(condition = "input.popDist == 'symmetric'",
-                               plotOutput('plotsymmetric1')),
-              conditionalPanel(condition = "input.popDist == 'astragalus'",
-                               plotOutput("pop")),
-              conditionalPanel(condition = "input.popDist == 'bimodal'",
-                               plotOutput('plotbiomodel1')),
-              conditionalPanel(condition = "input.popDist == 'poisson'",
-                               plotOutput('poissonpop')),
-              conditionalPanel(condition = "input.popDist == 'ipodshuffle'",
-                               plotOutput("iPodBarPlot")
-              )
-            )
-          ),
           tags$hr(),
           h2("Proposed Modular Design"),
           # New UI ====
@@ -418,7 +81,6 @@ ui <- list(
                     "Discrete" = list(
                       "Accident rate" = "poisson",
                       "Astragalus (bone die)" = "astragalus",
-                      "Fair die" = "disEquip",
                       "Playlist" = "playlist"
                     )
                   ),
@@ -455,8 +117,8 @@ ui <- list(
                 conditionalPanel(
                   condition = "input.population == 'bimodal'",
                   sliderInput(
-                    inputId = "rightMode",
-                    label = "Percentage under right mode",
+                    inputId = "leftMode",
+                    label = "Percentage under left mode",
                     min = 10,
                     max = 90,
                     step = 1,
@@ -494,7 +156,19 @@ ui <- list(
                     step = 0.5,
                     value = 0,
                     ticks = TRUE
-                  )
+                  ),
+                  conditionalPanel(
+                    condition = "input.upperBound <= input.lowerBound",
+                    p(tags$em("Note: "), "Lower bound must be less than upper bound.")
+                  ),
+                  conditionalPanel(
+                    condition = "input.mode > input.upperBound",
+                    p(tags$em("Note: "), "Most probable value must be between bounds.")
+                  ),
+                  conditionalPanel(
+                   condition = "input.mode < input.lowerBound",
+                   p(tags$em("Note: "), "Most probable value must be between bounds.")
+                  ),
                 ),
                 ## Cauchy ----
                 conditionalPanel(
@@ -536,16 +210,7 @@ ui <- list(
                       0, resulting in all cases being the same.")
                   )
                 ),
-                ## Fair die ----
-                conditionalPanel(
-                  condition = "input.population == 'disEquip'",
-                  selectInput(
-                    inputId = "numSides",
-                    label = "Number of sides",
-                    choices = c(4, 6, 8, 10, 12, 20, 48, 120)
-                    # Remember to convert input$numSides to number
-                  )
-                ),
+                
                 # Playlist ----
                 conditionalPanel(
                   condition = "input.population == 'playlist'",
@@ -589,7 +254,7 @@ ui <- list(
                     ),
                     column(
                       width = 6,
-                      checkboxGroupInput(
+                      radioButtons(
                         inputId = "pickGenre",
                         label = "Genre(s) to track:",
                         choices = list(
@@ -602,7 +267,27 @@ ui <- list(
                       )
                     )
                   )
+                ),
+                fluidRow(
+                  box(
+                    title = strong("Key terms/instructions"),
+                    status = "primary",
+                    width = 12,
+                    collapsible = TRUE,
+                    collapsed = TRUE,
+                    tags$ul(tags$b("Instructions"), 
+                            tags$li("Click on the dropdown menu
+                            to select the population distribution that you would
+                            like to work with")), 
+                    tags$ul(tags$b("Terms"),
+                            tags$li("Kurtosis - The measure of skewness relative 
+                                    to the standard normal distribution"),
+                            tags$li())
+                            
+                    
+                  )
                 )
+                
               )
             ),
             column( # Create plot column ----
@@ -610,47 +295,7 @@ ui <- list(
               plotOutput("popPlot")
               )
           ),
-          ## Removed Controls ----
-          tags$hr(style="border-top: dotted 4px;"),
-          p("The number of paths (or number of repetitions) and the sample size
-            sliders aren't actually essential to the Population Picker. Rather,
-            they both reflect aspects of outputs beyond the population graph
-            that we might want. Namely, simulated data. As such I have opted to
-            remove them from the Population Picker's controls. However, I have
-            sought to build the module in such a way that should a person want
-            to manipulate both of these aspects beyond the default (i.e., 5
-            paths/replicates and a sample size of 100), they can by adding inputs
-            to their app and passing the input(s) to the appropriate argument of
-            the module."),
-          fluidRow(
-            column(
-              width = 4,
-              ## Path Slider ----
-              sliderInput(
-                inputId = "paths",
-                label = "Number of paths",
-                min = 1,
-                max = 5,
-                step = 1,
-                value = 1,
-                round = TRUE,
-                ticks = FALSE
-              ),
-              ## Sample Size Slider ----
-              sliderInput(
-                inputId = "size",
-                label = HTML(paste0("Sample size (",
-                                    tags$em("n"),
-                                    ")")),
-                min = 10,
-                max = 1000,
-                step = 5,
-                value = 100,
-                round = TRUE,
-                ticks = FALSE
-              )
-            )
-          ),
+
           tags$hr(),
           p("end of page")
         )
@@ -682,18 +327,19 @@ server <- function(input, output, session){
   gammaShape <- reactive({
     ifelse(input$skewness != 0, 4/(input$skewness)^2, 0)
   })
-  gammaScale <- reactive({ 1/sqrt(abs(gammaShape())) })
+  gammaScale <- reactive({1/sqrt(abs(gammaShape())) })
   gammaMax <- reactive({
-    ifelse(input$skewness !=0, max(qgamma(0.999, shape = gammaShape(),
+    ifelse(input$skewness != 0, max(qgamma(0.999, shape = gammaShape(),
                                       scale = gammaScale()) + 2, 10), 0)
   })
   kurtTheta <- reactive({
-    if(input$kurtosis < 0) {
+    if (input$kurtosis < 0) {
       -3 * (input$kurtosis + 2) / (2 * input$kurtosis)
     } else if (input$kurtosis > 0) {
       6 / input$kurtosis + 4
-    } else { 0 }
+    } else  {0}
   })
+  
 
   # Reconstruct the plot using the following logic
   ## Step 1a create a data frame with all density columns OR
@@ -720,7 +366,7 @@ server <- function(input, output, session){
 
     ## Distribution Specific plots ----
     ###
-    if(input$population == "start"){
+    if (input$population == "start") {
       plot <- plot + ggplot2::annotate(geom = "text",
                                        x = 0,
                                        y =  0.2,
@@ -750,7 +396,7 @@ server <- function(input, output, session){
                                               size = 1.5)
       }
     } else if (input$population == "sym") {
-      if(input$kurtosis < 0) {
+      if (input$kurtosis < 0) {
         plot <- plot + ggplot2::stat_function(
           data = data.frame(x = seq(from = -10, to = 10, by = 1)),
           fun = function(x){dbeta(x = x/20 + 0.5, shape1 = kurtTheta(),
@@ -759,10 +405,7 @@ server <- function(input, output, session){
       } else if (input$kurtosis > 0) {
         plot <- plot + ggplot2::stat_function(
           fun = function(x){dt(x = x, df = kurtTheta())},
-          color = psuPalette[1], size = 1.5) +
-          ggplot2::stat_function(fun = function(x){
-            exp(-log(2) - log(1) - log( cosh( 0.5*pi*(x-0)/1 ) ))}) +
-          ggplot2::stat_function(fun = dnorm, color = "red")
+          color = psuPalette[1], size = 1.5) 
       } else {
         plot <- plot + ggplot2::stat_function(
           data = data.frame(x = seq(from = -10, to = 10, by = 1)),
@@ -770,6 +413,13 @@ server <- function(input, output, session){
           color = psuPalette[1], size = 1.5)
       }
     } else if (input$population == "bimodal") {
+      plot <- plot + stat_function(
+        data = data.frame(x = seq(from = 0, to = 1, by = 0.1)),
+        fun = biDens,
+        args = list(left = input$leftMode/100),
+        color = psuPalette[1],
+        size = 1.5
+      )
 
     } else if (input$population == "tri") {
       plot <- plot + ggplot2::stat_function(
@@ -782,7 +432,66 @@ server <- function(input, output, session){
         fun = dcauchy, args = list(location = input$medianMode,
                                    scale = input$halfWidth),
         color = psuPalette[1], size = 1.5)
+    } else if (input$population == "astragalus") {
+      # Population of Astragalus
+        
+        data<-data.frame(x=c(1,3,4,6), y=c(.1,.4,.4,.1))
+        plot <- makeBarPlot(xlab= "Number on roll of astragalus", data= data, levels=1:6)
+      
+      
+      
+      # Matrix of sample values for the astragalus population graph 
+      drawAdie <-
+        reactive(matrix(
+          sample(die(), input$aspath * input$assize,
+                 replace = TRUE),
+          nrow = input$assize,
+          ncol = input$aspath
+        ))
+    } else if(input$population == "playlist") {
+      nSongs<-reactive({
+        if(input$pickGenre=="Jazz"){
+          nSongs <- input$jazzN
+        }
+        else if(input$pickGenre=="Rock"){
+          nSongs <- input$rockN
+        }
+        else if(input$pickGenre=="Country"){
+          nSongs <- input$countryN
+        }
+        else{
+          nSongs <- input$hipHopN
+        }
+      })
+      
+      # Set up songs from four types
+      songs <- reactive({
+        songs <- c(rep(input$jazzN),
+                   rep(input$rockN),
+                   rep(input$countryN),
+                   rep(input$hipHopN))
+      })
+      
+      # Bar plot
+        # Parameters for bar plot
+        p <- nSongs() / sum(songs())
+        data<-data.frame(x = c("Other music (0)", paste(input$pickGenre,"(1)")), y=c(1-p, p))
+        data$x<-factor(data$x, levels=data$x) # Done to force sorted order for bars
+        
+        # Make bar plot
+        plot<- makeBarPlot(xlab= "Genre", data= data)
+      
+      cacheKeyExpr = {
+       list(input$jazzN, input$rockN, input$countryN, input$pickGenre, input$hipHopN)
+      }
+    } else if (input$population == "poisson") {
+      
+        data<-data.frame(x=0:ceiling(2*input$unitRate+5)) # More x's than necessary
+        data$y<-(input$unitRate^data$x) * exp(-input$unitRate)/factorial(data$x) # Get y vals for x's
+        data<-rbind(data[1:2,], filter(data[-c(1,2), ], y>.0005)) # Filter based on probability
+        plot <- makeBarPlot(xlab= "Number of accidents", data= data)
     }
+      
     # else {
     #   plot <- plot + ggplot2::stat_function(fun = dnorm,
     #                                         color = psuPalette[1],
@@ -798,20 +507,20 @@ server <- function(input, output, session){
   # Inputs: Dataframe consisting of columns x and y to define axes, limits for x axis in form c(lower, upper), optional path for symmetric case
   # Output: ggplot of density
   makeDensityPlot <- function(data, xlims, path=0){
-    plot<-ggplot2::ggplot(aes(x=x, y=y), data= data) +
-      geom_path(color="#0072B2", size=1.5) +
+    plot <- ggplot2::ggplot(aes(x = x, y = y), data = data) +
+      geom_path(color = "#0072B2", size = 1.5) +
       xlim(xlims) +
       xlab("Value") +
       ylab("Density") +
-      ggtitle("Population Graph")+
-      theme(axis.text = element_text(size=18),
-            plot.title = element_text(size=18, face="bold"),
-            axis.title = element_text(size=18),
-            panel.background = element_rect(fill = "white", color="black")
+      ggtitle("Population Graph") +
+      theme(axis.text = element_text(size = 18),
+            plot.title = element_text(size = 18, face = "bold"),
+            axis.title = element_text(size = 18),
+            panel.background = element_rect(fill = "white", color = "black")
       )
     # For case in symmetric where path is 1 causing "box" shape
-    if(path ==1){
-      plot<-plot+
+    if (path  == 1) {
+      plot <- plot +
         geom_segment(aes(x=0, y=0, xend=0, yend=1), color="#0072B2", size=1.5)+
         geom_segment(aes(x=1, y=0, xend=1, yend=1), color="#0072B2", size=1.5)
     }
