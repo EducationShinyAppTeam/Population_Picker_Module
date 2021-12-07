@@ -72,7 +72,9 @@ server <- function(input, output, session){
   # New ----
   # Limit the Genre selection to no more than three, no few than 1
   
-  popPickerServer(namespaceID = "popPicker")
+  data <- popPickerServer(namespaceID = "popPicker")
+  
+  print(data)
 
   # # Old ----
   # # Function to create density plots for each group

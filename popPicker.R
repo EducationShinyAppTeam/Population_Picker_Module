@@ -542,5 +542,20 @@ popPickerServer <- function(namespaceID){
         scale_x_discrete(drop = FALSE)
       return(plot)
     }
+    
+    ### Create data
+    rnorm(n = 50, mean = 0, sd = 1)
+    
+    # From Adam
+    # unsure of triangular data
+    # switch("input.population", 
+    #               "skew" = sample(1:10, size = 100, replace = TRUE, prob = 10:1),
+    #               "sym" = rnorm(n = 10000, mean = 0, sd = 1),
+    #               "bimodal" = nn <- 1e4, set.seed(1), betas<-rbeta(nn,2,2),
+    #               sims = c(betas[1:(nn/2)]*2+1,
+    #                        betas[(nn/2+1):nn]*2+3),
+    #               "cauchy" = x_dcauchy <- seq(0, 1, by = 0.02),
+    #               y_dcauchy <- dcauchy(x_dcauchy, scale = 5)  
+    # )
   })
 }
