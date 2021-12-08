@@ -14,7 +14,7 @@ library(dplyr)
 
 
 #betaY <- rbeta(2,5)
-#biData <- 
+#biData <-
 
 # Define top level objects ----
 psuPalette <- c("#1E407C","#BC204B","#3EA39E","#E98300",
@@ -60,6 +60,22 @@ ui <- list(
           # New UI ====
           popPickerUI(namespaceID = "popPicker"),
           tags$hr(),
+          sliderInput(
+            inputId = "paths",
+            label = "Paths",
+            min = 1,
+            max = 5,
+            step = 1,
+            value = 1
+          ),
+          sliderInput(
+            inputId = "sampleSize",
+            label = "Set sample size",
+            min = 10,
+            max = 500,
+            value = 100
+          ),
+          tags$hr(),
           p("end of page")
         )
       )
@@ -71,10 +87,38 @@ ui <- list(
 server <- function(input, output, session){
   # New ----
   # Limit the Genre selection to no more than three, no few than 1
-  
-  data <- popPickerServer(namespaceID = "popPicker")
-  
-  print(data)
+
+  simData <- popPickerServer(namespaceID = "popPicker")
+
+  sampleData <- reactiveVal(0)
+
+  observeEvent(
+    eventExpr = c(simData$dataFunction(), input$sampleSize, simData$pop()),
+    handlerExpr = {
+      maxPaths = 5
+      makeData <- gsub(
+        pattern = "size",
+        replacement = (input$sampleSize * maxPaths),
+        x = simData$dataFunction()
+      )
+      print(simData$pop())
+      print(simData$dataFunction())
+      sampleData(
+        matrix(
+          data = eval(parse(text = makeData)),
+          nrow = input$sampleSize,
+          ncol = maxPaths
+        )
+      )
+    }
+  )
+
+  observeEvent(
+    eventExpr = input$paths,
+    handlerExpr = {
+      print(sampleData()[,1:input$paths])
+    }
+  )
 
   # # Old ----
   # # Function to create density plots for each group
@@ -100,30 +144,30 @@ server <- function(input, output, session){
   #   }
   #   plot
   # }
-  # 
+  #
   # # Function to create bar plots for each group
   # # Inputs: x axis label (string), dataframe consisting of either column x or columns x and y to define axes
   # # Output: ggplot of resulting bar plot
-  # 
-  # 
+  #
+  #
   # ## Left skewed----
   # leftSkew<-reactive({11-10*input$leftskew})
-  # 
+  #
   # # Population of left skewed
   # output$plotleft1 <- renderCachedPlot({
   #   # Define parameters for density plot
   #   x <- seq((leftSkew()) - 9 * sqrt((leftSkew())),0, length = input$symsize)
   #   y <- dgamma(-x, shape = (leftSkew()), beta = 1)
   #   data<-data.frame(x=x, y=y)
-  # 
+  #
   #   # Make Density Plot
   #   makeDensityPlot(data=data, xlims = c((leftSkew()) - 9 * sqrt((leftSkew())), 0))
   # },
   # cacheKeyExpr = {
   #   list(input$leftskew)
   # })
-  # 
-  # 
+  #
+  #
   # ## Right skewed----
   # rightSkew<-reactive({11-10*input$rightskew})
   # # Population of right skewed
@@ -132,15 +176,15 @@ server <- function(input, output, session){
   #   x <- seq(0, (rightSkew()) + 9 * sqrt(rightSkew()), length = input$symsize)
   #   y <- dgamma(x, shape = (rightSkew()), beta = 1)
   #   data<-data.frame(x=x, y=y)
-  # 
+  #
   #   # Make the density plot
   #   makeDensityPlot(data=data, xlims = c(0, (rightSkew()) + 9 * sqrt((rightSkew()))))
   # },
   # cacheKeyExpr = {
   #   list(input$rightskew)
   # })
-  # 
-  # 
+  #
+  #
   # ## Symmetric skewed----
   # inverse<-reactive({round(14.6*input$inverse^3-5.7*input$inverse^2 + input$inverse+.1,3)})
   # # Population of Symmetric skewed
@@ -151,15 +195,15 @@ server <- function(input, output, session){
   #           shape1 = inverse(),
   #           shape2 = inverse())
   #   data <- data.frame(x = x, y = dens)
-  # 
+  #
   #   # Make density plot separated by case where the peakedness is exactly 1 (causes a "box" shape)
   #   makeDensityPlot(data = data, xlims = c(-0.03, 1.03), path=inverse())
   # },
   # cacheKeyExpr = {
   #   list(input$symsize, input$inverse)
   # })
-  # 
-  # 
+  #
+  #
   # ## Bimodal----
   # # Population for bimodel
   # prop<-reactive({input$prop/100})
@@ -171,17 +215,17 @@ server <- function(input, output, session){
   #   leftdraw <- dbeta(z, 4,14)*.2
   #   rightdraw <- dbeta(y, 4,14) *.2
   #   data<-data.frame(x = seq(0, 5, t*5), y = prop() * leftdraw + (1 - prop()) * rightdraw)
-  # 
+  #
   #   # Make the density plot
   #   makeDensityPlot(data = data, xlims = c(0,5))
   # },
   # cacheKeyExpr = {
   #   list(input$prop)
   # })
-  # 
-  # 
+  #
+  #
   # ## Accident Rate----
-  # 
+  #
   # # Population of Poisson
   # output$poissonpop <- renderCachedPlot({
   #   data<-data.frame(x=0:ceiling(2*input$poissonmean+5)) # More x's than necessary
@@ -192,21 +236,21 @@ server <- function(input, output, session){
   # cacheKeyExpr = {
   #   list(input$poissonmean)
   # })
-  # 
-  # 
+  #
+  #
   # ## Astrugulas
-  # 
+  #
   # # Die results
   # die <- reactive({
   #   die <- c(rep(1, 1), rep(3, 4), rep(4, 4), rep(6, 1))
   # })
-  # 
+  #
   # # Population of Astragalus
   # output$pop <- renderPlot({
   #   data<-data.frame(x=c(1,3,4,6), y=c(.1,.4,.4,.1))
   #   makeBarPlot(xlab= "Number on roll of astragalus", data= data, levels=1:6)
   # })
-  # 
+  #
   # # Matrix of sample values
   # drawAdie <-
   #   reactive(matrix(
@@ -215,10 +259,10 @@ server <- function(input, output, session){
   #     nrow = input$assize,
   #     ncol = input$aspath
   #   ))
-  # 
+  #
   # ## iPOD SHUFFLE----
-  # 
-  # 
+  #
+  #
   # # Reactive expression to get the number of songs of the chosen type
   # nSongs<-reactive({
   #   if(input$ptype=="Jazz"){
@@ -234,7 +278,7 @@ server <- function(input, output, session){
   #     nSongs <- input$s4
   #   }
   # })
-  # 
+  #
   # # Set up songs from four types
   # songs <- reactive({
   #   songs <- c(rep(input$s1),
@@ -242,14 +286,14 @@ server <- function(input, output, session){
   #              rep(input$s3),
   #              rep(input$s4))
   # })
-  # 
+  #
   # # Bar plot
   # output$iPodBarPlot <- renderCachedPlot({
   #   # Parameters for bar plot
   #   p <- nSongs() / sum(songs())
   #   data<-data.frame(x = c("Other music (0)", paste(input$ptype,"(1)")), y=c(1-p, p))
   #   data$x<-factor(data$x, levels=data$x) # Done to force sorted order for bars
-  # 
+  #
   #   # Make bar plot
   #   makeBarPlot(xlab= "Genre", data= data)
   # },

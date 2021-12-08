@@ -270,10 +270,10 @@ popPickerUI <- function(namespaceID, discMenu = "default", contMenu = "default")
           collapsible = TRUE,
           collapsed = TRUE,
           tags$ul(
-            tags$strong("Instructions"), 
+            tags$strong("Instructions"),
             tags$li("Click on the dropdown menu to select the population
                       distribution that you would like to work with")
-          ), 
+          ),
           tags$ul(
             tags$strong("Terms"),
             tags$li("Kurtosis - The measure of skewness relative to the
@@ -320,7 +320,7 @@ popPickerServer <- function(namespaceID){
     #       selected = "Jazz"
     #     )}
     # })
-    
+
     # Create the reactive parameters ----
     gammaShape <- reactive({
       ifelse(input$skewness != 0, 4/(input$skewness)^2, 0)
@@ -337,16 +337,15 @@ popPickerServer <- function(namespaceID){
         6 / input$kurtosis + 4
       } else  {0}
     })
-    
-    
+
+
     # Reconstruct the plot using the following logic
     ## Step 1a create a data frame with all density columns OR
     ## Step 1b create a routine to create custom data frame that is updated
     ##         or replaced for each run
     ## Step 2 create the two graph commands: 1 for continuous, 1 for discrete
     ## Step 3 add any additional customizations.
-    
-    
+
     # Create the population plot ----
     output$popPlot <- renderPlot({
       validate(
@@ -369,7 +368,7 @@ popPickerServer <- function(namespaceID){
         ) +
         scale_x_continuous(expand = expansion(mult = 0, add = 1)) +
         scale_y_continuous(expand = expansion(mult = c(0.01, 0.1), add = 0))
-      
+
       ## Distribution Specific plots ----
       ### Skewness ----
       if (input$population == "skew") {
@@ -411,7 +410,7 @@ popPickerServer <- function(namespaceID){
             fun = function(x){dt(x = x, df = kurtTheta())},
             color = psuPalette[1],
             size = 1.5
-          ) 
+          )
         } else {
           plot <- plot + stat_function(
             data = data.frame(x = seq(from = -10, to = 10, by = 1)),
@@ -454,7 +453,7 @@ popPickerServer <- function(namespaceID){
           data = data,
           levels = 1:6
         )
-        # Matrix of sample values for the astragalus population graph 
+        # Matrix of sample values for the astragalus population graph
         drawAdie <-
           reactive(matrix(
             sample(die(), input$aspath * input$assize,
@@ -482,7 +481,7 @@ popPickerServer <- function(namespaceID){
             rep(input$hipHopN)
           )
         })
-        
+
         # Parameters for bar plot
         p <- nSongs() / sum(songs())
         data <- data.frame(
@@ -490,7 +489,7 @@ popPickerServer <- function(namespaceID){
           y = c(1 - p, p)
         )
         data$x <- factor(data$x, levels = data$x) # Done to force sorted order for bars
-        
+
         # Make bar plot
         plot <- makeBarPlot(xlab = "Genre", data = data)
         ### Poisson ----
@@ -521,7 +520,7 @@ popPickerServer <- function(namespaceID){
         56 * (left * x * (1 - x)^6 + (1 - left) * x^6 * (1 - x))
       )
     }
-    
+
     ### makeBarPlot ----
     makeBarPlot <- function(xlab, data, levels = as.character(data$x)){
       plot <- ggplot(
@@ -542,20 +541,63 @@ popPickerServer <- function(namespaceID){
         scale_x_discrete(drop = FALSE)
       return(plot)
     }
-    
-    ### Create data
-    rnorm(n = 50, mean = 0, sd = 1)
-    
+
+    ### Create data ----
+    dataGenerator <- eventReactive(
+      eventExpr = c(input$population, input$skewness, input$kurtosis,
+                    input$leftMode, input$lowerBound, input$upperBound,
+                    input$mode, input$medianMode, input$halfWidth),
+      valueExpr = {
+        if (input$population == "skew" & input$skewness < 0) {
+          paste0("rgamma(size, shape = ", gammaShape(),
+                 ", scale = ", gammaScale(), ")")
+        } else if (input$population == "skew" & input$skewness > 0) {
+          paste0("-1*rgamma(size, shape = ", gammaShape(),
+                 ", scale = ", gammaScale(), ")")
+        } else if (input$population == "skew" & input$skewness == 0) {
+          "rnorm(size, mean = 0, sd = 1)"
+        } else if (input$population == "sym" & input$kurtosis < 0) {
+          paste0("0.5 + 20*rbeta(size, shape1 = ", kurtTheta(),
+                 ", shape2 = ", kurtTheta(), ")")
+        } else if (input$population == "sym" & input$kurtosis > 0) {
+          paste0("rt(size, df = ", kurtTheta(), ")")
+        } else if (input$population == "sym" & input$kurtosis == 0) {
+          "rnorm(size, mean = -15, sd = 1)"
+        } else if (input$population == "bimodal") {
+          "10:15"
+        } else if (input$population == "tri") {
+          paste0("rtriangle(size, a = ", input$lowerBound,
+                 ", b = ", input$upperBound, ", c = ", input$mode, ")")
+        } else if (input$population == "cauchy") {
+          paste0("rcauchy(size, location = ", input$medianMode,
+                 ", scale = ", input$halfWidth, ")")
+        } else {
+          "1:5"
+        }
+      }
+    )
+
+    return(
+      list(
+        pop = reactive({input$population}),
+        dataFunction = reactive({dataGenerator()})
+      )
+    )
+
+
+
+
     # From Adam
     # unsure of triangular data
-    # switch("input.population", 
+    # switch("input.population",
     #               "skew" = sample(1:10, size = 100, replace = TRUE, prob = 10:1),
     #               "sym" = rnorm(n = 10000, mean = 0, sd = 1),
     #               "bimodal" = nn <- 1e4, set.seed(1), betas<-rbeta(nn,2,2),
     #               sims = c(betas[1:(nn/2)]*2+1,
     #                        betas[(nn/2+1):nn]*2+3),
     #               "cauchy" = x_dcauchy <- seq(0, 1, by = 0.02),
-    #               y_dcauchy <- dcauchy(x_dcauchy, scale = 5)  
+    #               y_dcauchy <- dcauchy(x_dcauchy, scale = 5)
     # )
+
   })
 }
