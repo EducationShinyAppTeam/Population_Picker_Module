@@ -564,7 +564,7 @@ popPickerServer <- function(namespaceID){
         } else if (input$population == "sym" & input$kurtosis == 0) {
           "rnorm(size, mean = -15, sd = 1)"
         } else if (input$population == "bimodal") {
-          "10:15"
+          list(alpha = 2, beta = 7, left = input$leftMode/100)
         } else if (input$population == "tri") {
           paste0("rtriangle(size, a = ", input$lowerBound,
                  ", b = ", input$upperBound, ", c = ", input$mode, ")")

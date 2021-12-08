@@ -96,20 +96,44 @@ server <- function(input, output, session){
     eventExpr = c(simData$dataFunction(), input$sampleSize, simData$pop()),
     handlerExpr = {
       maxPaths = 5
-      makeData <- gsub(
-        pattern = "size",
-        replacement = (input$sampleSize * maxPaths),
-        x = simData$dataFunction()
-      )
-      print(simData$pop())
-      print(simData$dataFunction())
-      sampleData(
-        matrix(
-          data = eval(parse(text = makeData)),
-          nrow = input$sampleSize,
-          ncol = maxPaths
+      if (simData$pop() != "bimodal") {
+        makeData <- gsub(
+          pattern = "size",
+          replacement = (input$sampleSize * maxPaths),
+          x = simData$dataFunction()
         )
-      )
+        sampleData(
+          matrix(
+            data = eval(parse(text = makeData)),
+            nrow = input$sampleSize,
+            ncol = maxPaths
+          )
+        )
+      } else if (simData$pop() == "bimodal") {
+        temp1 <- sample(
+          x = c(0,1),
+          size = input$sampleSize * maxPaths,
+          replace = TRUE,
+          prob = c(simData$dataFunction()$left, 1 - simData$dataFunction()$left)
+        )
+        leftSide <- rbeta(
+          n = length(temp1) - sum(temp1),
+          shape1 = simData$dataFunction()$alpha,
+          shape2 = simData$dataFunction()$beta
+        )
+        rightSide <- 1 - rbeta(
+          n = sum(temp1),
+          shape1 = simData$dataFunction()$alpha,
+          shape2 = simData$dataFunction()$beta
+        )
+        sampleData(
+          matrix(
+            data = c(leftSide, rightSide),
+            nrow = input$sampleSize,
+            ncol = maxPaths
+          )
+        )
+      }
     }
   )
 
