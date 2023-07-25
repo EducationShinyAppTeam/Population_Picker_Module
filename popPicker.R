@@ -344,7 +344,7 @@ popPickerServer <- function(namespaceID){
     ## Step 1b create a routine to create custom data frame that is updated
     ##         or replaced for each run
     ## Step 2 create the two graph commands: 1 for continuous, 1 for discrete
-    ## Step 3 add any additional customizations.
+    ## Step 3 add any additional customization.
 
     # Create the population plot ----
     output$popPlot <- renderPlot({
